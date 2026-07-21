@@ -1,5 +1,6 @@
 import os
 import requests
+from datetime import datetime
 from supabase import create_client
  
 PROJECT_IDS = [
@@ -58,10 +59,31 @@ def get_all_experiments(project_id):
     return all_experiments
  
  
+def clean_date(value, experiment_id):
+    """
+    Only pass through values that are genuinely valid dates.
+    Anything else (missing, malformed, or unexpected values like "a/b")
+    gets logged and swapped for None instead of crashing the whole batch.
+    """
+    if not value:
+        return None
+ 
+    try:
+        datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        return value
+    except ValueError:
+        print(
+            f"⚠️  Bad date value for experiment {experiment_id}: {value!r} "
+            f"— storing as null instead"
+        )
+        return None
+ 
+ 
 def map_experiment(experiment):
+    experiment_id = str(experiment["id"])
     return {
         "project_id": str(experiment["project_id"]),
-        "experiment_id": str(experiment["id"]),
+        "experiment_id": experiment_id,
         "campaign_id": str(experiment["campaign_id"]),
         "campaign_name": experiment["name"],
         "experience_name": experiment["name"],
@@ -70,8 +92,8 @@ def map_experiment(experiment):
         "traffic_split": experiment["traffic_allocation"],
         "holdback": experiment["holdback"],
         "status": experiment["status"],
-        "start_date": experiment.get("created"),
-        "end_date": experiment.get("last_modified"),
+        "start_date": clean_date(experiment.get("created"), experiment_id),
+        "end_date": clean_date(experiment.get("last_modified"), experiment_id),
     }
  
  
