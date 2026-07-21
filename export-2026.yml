@@ -1,0 +1,52 @@
+name: Export 2026 Experiment Report
+ 
+on:
+
+  workflow_dispatch:
+ 
+jobs:
+
+  export:
+
+    runs-on: ubuntu-latest
+ 
+    steps:
+
+      - name: Checkout repository
+
+        uses: actions/checkout@v4
+ 
+      - name: Set up Python
+
+        uses: actions/setup-python@v5
+
+        with:
+
+          python-version: "3.11"
+ 
+      - name: Install dependencies
+
+        run: |
+
+          pip install supabase xlsxwriter
+ 
+      - name: Export 2026 experiment report
+
+        env:
+
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+        run: python export_2026.py
+ 
+      - name: Upload Excel report
+
+        uses: actions/upload-artifact@v4
+
+        with:
+
+          name: experiments-2026
+
+          path: experiments_2026.xlsx
+ 
